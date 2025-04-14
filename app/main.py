@@ -17,7 +17,7 @@ try:
         f"mongodb+srv://{user}:{password}@cluster0.4uknf.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
     db = client.chess
     connectedToDababase = True
-except Exception:
+except Exception as e:
     print("COULD NOT CONNECT TO DATABASE")
 
 
@@ -27,12 +27,13 @@ def post_piece(pieceType: str, pieceColor: str, response: Response):
 
     if type(piece) is dict:
         board.addPieceToList(piece)
-        db.actions.insert_one({"New Piece Created": str(
-            piece["id"])}) if connectedToDababase else None
+        if connectedToDababase:
+            db.actions.insert_one({"New Piece Created": str(piece["id"])})
         response.status_code = status.HTTP_201_CREATED
         return {"Id": piece["id"]}
 
-    db.errors.insert_one({"error": piece}) if connectedToDababase else None
+    if connectedToDababase:
+        db.errors.insert_one({"error": piece})
     response.status_code = status.HTTP_400_BAD_REQUEST
     return {"error": piece}
 
@@ -43,16 +44,16 @@ def put_board(id: UUID, position: str, response: Response):
 
     if type(result) is str:
         if result == "PIECE ADDED":
-            db.actions.insert_one({"New Piece Added To Board": str(
-                str(id) + "@" + position)}) if connectedToDababase else None
+            if connectedToDababase:
+                db.actions.insert_one({"New Piece Added To Board": str(str(id) + "@" + position)})
             response.status_code = status.HTTP_202_ACCEPTED
             return {"success": result}
-        db.errors.insert_one(
-            {"error": result}) if connectedToDababase else None
+        if connectedToDababase:
+            db.errors.insert_one({"error": result})
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"error": result}
 
-    db.actions.insert_one({"Calculated Possible Locations": str(
-        result)}) if connectedToDababase else None
+    if connectedToDababase:
+        db.actions.insert_one({"Calculated Possible Locations": str(result)})
     response.status_code = status.HTTP_200_OK
     return {"possibleLocations": result}
